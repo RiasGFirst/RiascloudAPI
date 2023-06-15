@@ -1,4 +1,4 @@
-import subprocess
+import os
 
 # Exécution de la commande "playwright install"
-subprocess.call("playwright install", shell=True)
+os.system("playwright install")

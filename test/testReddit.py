@@ -7,6 +7,7 @@ import os
 
 #Load Env Variable
 load_dotenv()
+reddit_url = os.getenv("REDDIT_URL")
 reddit_username = os.getenv("REDDIT_USERNAME")
 reddit_password = os.getenv("REDDIT_PASSWORD")
 reddit_verify = os.getenv("REDDIT_CONNECTED")
@@ -16,7 +17,7 @@ reddit_verify = os.getenv("REDDIT_CONNECTED")
 
 def loginReddit():
     with sync_playwright() as p:
-        reddit_session_cookie = None
+        cookiesJSON = {}
         connected = None
 
         browser = p.chromium.launch()
@@ -31,43 +32,43 @@ def loginReddit():
         cookies = page.context.cookies()
 
         for cookie in cookies:
-            if cookie['name'] == 'reddit_session':
-                reddit_session_cookie = cookie['value']
-                break
+            name = cookie['name']
+            value = cookie['value']
+            cookiesJSON[name] = value
+
         headers = {
             "User-Agent": "Mozilla/5.0",
-            'Cookie': f'reddit_session={reddit_session_cookie}'
         }
-        response = requests.get(f'https://reddit.com/settings', headers=headers)
+        response = requests.get(f'{reddit_url}/settings', headers=headers, cookies=cookiesJSON)
         if response.ok:
             soup = BeautifulSoup(response.text, 'html.parser')
             verify_connected = soup.find('p', {'class': '_2nyJGeaFJbXTqTh9OGwxfu _1NdK7EwgYqUxJObBr3ym4o'})
             if verify_connected is not None and verify_connected.text == reddit_verify:
                 connected = "Login Successful"
-                return connected, reddit_session_cookie
+                return connected, cookiesJSON
             else:
                 connected = "Login Failed No Reddit_Session Cookies"
-                return connected, reddit_session_cookie
+                return connected, cookiesJSON
         else:
             connected = "Login Failed No Status Code 200"
-            return connected, reddit_session_cookie
+            return connected, cookiesJSON
 
 
+def getSubReddit(cookiesJSON):
 
-def getSubReddit(session_cookie):
     headers = {
         "User-Agent": "Mozilla/5.0",
-        'Cookie': f'reddit_session={session_cookie}'
     }
-    response = requests.get(f'https://www.reddit.com/r/cosplay', headers=headers)
+    response = requests.get(f'{reddit_url}/r/cosplay', headers=headers, cookies=cookiesJSON)
     if response.ok:
-        #_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3 _1Qs6zz6oqdrQbR7yE_ntfY
         soup = BeautifulSoup(response.text, 'html.parser')
-        posts = soup.find_all('div', {'class': '_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3'})
-        print(len(posts))
+        posts = soup.find_all('div', {'class': '_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3 _1Qs6zz6oqdrQbR7yE_ntfY'})
+        for post in posts:
+            print(post)
+            print("---------------------------------------------------")
     else:
-        print("Reddit API Error")
+        print("OH HELL NO!!!!")
 
 
-if __name__ == "__main__":
-    getSubReddit(session_cookie=loginReddit()[1])
+if __name__ == '__main__':
+    getSubReddit(loginReddit()[1])
