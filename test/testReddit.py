@@ -7,7 +7,6 @@ import os
 
 #Load Env Variable
 load_dotenv()
-reddit_url = os.getenv("REDDIT_URL")
 reddit_username = os.getenv("REDDIT_USERNAME")
 reddit_password = os.getenv("REDDIT_PASSWORD")
 reddit_verify = os.getenv("REDDIT_CONNECTED")
@@ -39,7 +38,7 @@ def loginReddit():
             "User-Agent": "Mozilla/5.0",
             'Cookie': f'reddit_session={reddit_session_cookie}'
         }
-        response = requests.get(f'{reddit_url}/settings', headers=headers)
+        response = requests.get(f'https://reddit.com/settings', headers=headers)
         if response.ok:
             soup = BeautifulSoup(response.text, 'html.parser')
             verify_connected = soup.find('p', {'class': '_2nyJGeaFJbXTqTh9OGwxfu _1NdK7EwgYqUxJObBr3ym4o'})
@@ -52,3 +51,23 @@ def loginReddit():
         else:
             connected = "Login Failed No Status Code 200"
             return connected, reddit_session_cookie
+
+
+
+def getSubReddit(session_cookie):
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        'Cookie': f'reddit_session={session_cookie}'
+    }
+    response = requests.get(f'https://www.reddit.com/r/cosplay', headers=headers)
+    if response.ok:
+        #_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3 _1Qs6zz6oqdrQbR7yE_ntfY
+        soup = BeautifulSoup(response.text, 'html.parser')
+        posts = soup.find_all('div', {'class': '_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3'})
+        print(len(posts))
+    else:
+        print("Reddit API Error")
+
+
+if __name__ == "__main__":
+    getSubReddit(session_cookie=loginReddit()[1])
