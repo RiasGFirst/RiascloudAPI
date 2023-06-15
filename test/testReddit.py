@@ -18,7 +18,6 @@ reddit_verify = os.getenv("REDDIT_CONNECTED")
 def loginReddit():
     with sync_playwright() as p:
         cookiesJSON = {}
-        connected = None
 
         browser = p.chromium.launch()
         page = browser.new_page()
@@ -35,6 +34,7 @@ def loginReddit():
             name = cookie['name']
             value = cookie['value']
             cookiesJSON[name] = value
+        page.close()
 
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -45,30 +45,42 @@ def loginReddit():
             verify_connected = soup.find('p', {'class': '_2nyJGeaFJbXTqTh9OGwxfu _1NdK7EwgYqUxJObBr3ym4o'})
             if verify_connected is not None and verify_connected.text == reddit_verify:
                 connected = "Login Successful"
-                return connected, cookiesJSON
+                return connected, cookies, cookiesJSON
             else:
                 connected = "Login Failed No Reddit_Session Cookies"
-                return connected, cookiesJSON
+                return connected, cookies, cookiesJSON
         else:
             connected = "Login Failed No Status Code 200"
-            return connected, cookiesJSON
+            return connected, cookies, cookiesJSON
 
 
-def getSubReddit(cookiesJSON):
+def getSubReddit(cookies, subReddit):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        browserContext = browser.new_context()
+        browserContext.add_cookies(cookies)
+        page = browserContext.new_page()
+        page.goto(f'{reddit_url}/r/{subReddit}', )
+        time.sleep(5)
+        page.mouse.wheel(0, 100)
 
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-    }
-    response = requests.get(f'{reddit_url}/r/cosplay', headers=headers, cookies=cookiesJSON)
-    if response.ok:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        posts = soup.find_all('div', {'class': '_1poyrkZ7g36PawDueRza-J _11R7M_VOgKO1RJyRSRErT3 _1Qs6zz6oqdrQbR7yE_ntfY'})
+        #_1oQyIsiPHYt6nx7VOmd1sz _1RYN-7H8gYctjOQeL8p2Q7
+        html = page.inner_html('div.rpBJOHq2PR60pnwJlUyP0')
+        soup = BeautifulSoup(html, 'html.parser')
+
+        posts = soup.find_all('div', {'class': '_1oQyIsiPHYt6nx7VOmd1sz'})
+
         for post in posts:
             print(post)
-            print("---------------------------------------------------")
-    else:
-        print("OH HELL NO!!!!")
+            print('-----------------------------------')
+        browser.close()
+
+
+
+
 
 
 if __name__ == '__main__':
-    getSubReddit(loginReddit()[1])
+    status, cookies, cookiesJSON = loginReddit()
+    print(status)
+    getSubReddit(cookies, 'cosplay')
