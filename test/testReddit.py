@@ -72,7 +72,7 @@ def getSubReddit(cookies, subReddit):
 
         for post in posts:
             print(post)
-            print('-----------------------------------')
+            print('----------------------------------')
         browser.close()
 
 
