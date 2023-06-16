@@ -56,7 +56,7 @@ def loginReddit():
 
 def getSubReddit(cookies, subReddit):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch()
         browserContext = browser.new_context()
         browserContext.add_cookies(cookies)
         page = browserContext.new_page()
@@ -69,11 +69,17 @@ def getSubReddit(cookies, subReddit):
         soup = BeautifulSoup(html, 'html.parser')
 
         posts = soup.find_all('div', {'class': '_1oQyIsiPHYt6nx7VOmd1sz'})
+        posts.pop(0)
 
-        for post in posts:
-            print(post)
-            print('----------------------------------')
+        #print(posts[1])
+        print(posts[1])
+
+        page.close()
         browser.close()
+
+
+
+
 
 
 
