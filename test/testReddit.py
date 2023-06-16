@@ -72,18 +72,10 @@ def getSubReddit(cookies, subReddit):
         posts.pop(0)
 
         #print(posts[1])
-        print(posts[1])
+        print(posts[2])
 
         page.close()
         browser.close()
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
