@@ -144,7 +144,7 @@ def main():
     #print(f"Status: {connected}")
     #print(f"Cookie: {reddit_session_cookie}")
     #print("=====================================")
-    reddit_session_cookie = "37565806251051%2C2023-06-23T10%3A21%3A08%2Cad130aeecebfee9b47791ad8b3cf4def3d95f988"
+    reddit_session_cookie = ""
     try:
         print("SubredditDB File:")
         createJSONBD(file_path=subredditDB_file)
