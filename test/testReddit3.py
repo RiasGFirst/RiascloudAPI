@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from pprint import pprint
 import requests
-import sqlite3
+import json
 import time
 import os
 
@@ -12,14 +12,17 @@ load_dotenv()
 reddit_username = os.getenv("REDDIT_USERNAME")
 reddit_password = os.getenv("REDDIT_PASSWORD")
 reddit_verify = os.getenv("REDDIT_CONNECTED")
+subredditDB_file = '../db/subreddit.json'
+
 
 #div._3dLmvT0hpACHFxhncqzCOr
 
 
 def loginReddit():
+    print("Login Reddit")
     with sync_playwright() as p:
 
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto('https://www.reddit.com/login')
         page.fill('input#loginUsername', reddit_username)
@@ -56,50 +59,45 @@ def loginReddit():
             return connected, reddit_session_cookie
 
 
-def createTable(conn):
-    c = conn.cursor()
-
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subreddit TEXT NOT NULL,
-            before TEXT
-        )
-    ''')
-    conn.commit()
+def createJSONBD(file_path):
+    # verify if file exist
+    if os.path.isfile(file_path):
+        print("File Exist")
+    else:
+        with open(file_path, 'w') as f:
+            f.write('{"subreddit": {}}')
+            f.close()
+        print("File created")
 
 
-def subredditExists(conn, subreddit):
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM stats WHERE subreddit = ?", (subreddit,))
-    count = c.fetchone()[0]
-    return count > 0
+def whatIsBeforeId(subreddit, file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+        if data['subreddit'][subreddit]:
+            before_id = data['subreddit'][subreddit]['before_id']
+            return before_id
+        else:
+            return None
 
 
-def insertStats(conn, subreddit, before):
-    c = conn.cursor()
-    c.execute('''
-            INSERT INTO stats (subreddit, before) VALUES (?, ?)
-        ''', (subreddit, before))
-    conn.commit()
+def addBeforeId(subreddit, before_id, file_path):
+    with open(file_path, 'r') as f:
+        data = json.loads(f.read())
+        # verify if subreddit exist in the file
+        if subreddit in data['subreddit']:
+            data['subreddit'][subreddit]['before_id'] = before_id
+            with open(file_path, 'w') as fe:
+                json.dump(data, fe, indent=4)
+                return "Before ID Updated"
+        else:
+            # add new subreddit
+            data['subreddit'][subreddit] = {"before_id": before_id}
+            with open(file_path, 'w') as fw:
+                json.dump(data, fw, indent=4)
+                return "New Subreddit Added"
 
 
-def updateBefore(conn, subreddit, new_before):
-    c = conn.cursor()
-
-    c.execute('''
-        UPDATE stats
-        SET before = ?
-        WHERE subreddit = ?
-    ''', (new_before, subreddit))
-
-    conn.commit()
-
-
-def getSubReddit(subreddit, reddit_session_cookie, before_id=None, conn=None):
-    if subredditExists(conn, subreddit) is False:
-        insertStats(conn, subreddit, before_id)
-
+def getSubReddit(subreddit, reddit_session_cookie):
     url_template = "https://www.reddit.com/r/{}/new.json?t=all{}"
     headers = {
         "User-Agent": "Mozilla/5.0",
@@ -111,12 +109,11 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None, conn=None):
     response = requests.get(url=url, headers=headers)
 
     if response.ok:
+        before_id = whatIsBeforeId(subreddit=subreddit, file_path=subredditDB_file)
         data = response.json()['data']
-
         new_before = data['children'][0]['data']['name']
         print(new_before)
         if before_id == new_before:
-            updateBefore(conn, subreddit, new_before)
             print("No New Posts")
 
         for post in data['children']:
@@ -124,7 +121,7 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None, conn=None):
             post_name = pdata['name']
 
             if post_name == before_id:
-                updateBefore(conn, subreddit, new_before)
+                addBeforeId(subreddit=subreddit, before_id=new_before, file_path=subredditDB_file)
                 print("Set New Before")
                 break
             else:
@@ -134,6 +131,7 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None, conn=None):
                 post_date = pdata['created_utc']
                 post_url = pdata.get('url_overridden_by_dest')
                 print(post_id, post_title, post_author, post_date, post_url)
+        return print(addBeforeId(subreddit=subreddit, before_id=new_before, file_path=subredditDB_file))
 
     else:
         print("Subreddit Connection Failed")
@@ -141,19 +139,21 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None, conn=None):
 
 
 def main():
-    connected, reddit_session_cookie = loginReddit()
-    print(f"Status: {connected}")
-    print(f"Cookie: {reddit_session_cookie}")
-    print("=====================================")
-    print("cosplay Subreddit:")
-    conn = sqlite3.connect('./db/reddit-subreddit.db')
-    createTable(conn)
+
+    #connected, reddit_session_cookie = loginReddit()
+    #print(f"Status: {connected}")
+    #print(f"Cookie: {reddit_session_cookie}")
+    #print("=====================================")
+    reddit_session_cookie = "37565806251051%2C2023-06-23T10%3A21%3A08%2Cad130aeecebfee9b47791ad8b3cf4def3d95f988"
     try:
-        getSubReddit(subreddit='cosplay', reddit_session_cookie=reddit_session_cookie, conn=conn)
+        print("SubredditDB File:")
+        createJSONBD(file_path=subredditDB_file)
+        print("cosplay Subreddit:")
+        getSubReddit(subreddit='cosplay', reddit_session_cookie=reddit_session_cookie)
+        print('hentai Subreddit:')
+        getSubReddit(subreddit='hentai', reddit_session_cookie=reddit_session_cookie)
     except KeyboardInterrupt:
         print('Exiting...')
-    finally:
-        conn.close()
 
 
 if __name__ == '__main__':
