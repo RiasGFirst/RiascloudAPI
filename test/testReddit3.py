@@ -12,6 +12,7 @@ load_dotenv()
 reddit_username = os.getenv("REDDIT_USERNAME")
 reddit_password = os.getenv("REDDIT_PASSWORD")
 reddit_verify = os.getenv("REDDIT_CONNECTED")
+reddit_session = os.getenv("REDDIT_SESSION") #Use for dev only
 subredditDB_file = '../db/subreddit.json'
 
 
@@ -22,7 +23,7 @@ def loginReddit():
     print("Login Reddit")
     with sync_playwright() as p:
 
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=False, slow_mo=50)
         page = browser.new_page()
         page.goto('https://www.reddit.com/login')
         page.fill('input#loginUsername', reddit_username)
@@ -65,7 +66,7 @@ def createJSONBD(file_path):
         print("File Exist")
     else:
         with open(file_path, 'w') as f:
-            f.write('{"subreddit": {}}')
+            f.write('{"exist": [],"subreddit": {}}')
             f.close()
         print("File created")
 
@@ -73,28 +74,28 @@ def createJSONBD(file_path):
 def whatIsBeforeId(subreddit, file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
-        if data['subreddit'][subreddit]:
-            before_id = data['subreddit'][subreddit]['before_id']
-            return before_id
-        else:
-            return None
+        for sub in data["exist"]:
+            if sub == subreddit:
+                before_id = data['subreddit'][subreddit]['before_id']
+                return before_id
+            else:
+                return None
 
 
 def addBeforeId(subreddit, before_id, file_path):
     with open(file_path, 'r') as f:
         data = json.loads(f.read())
-        # verify if subreddit exist in the file
-        if subreddit in data['subreddit']:
+        if subreddit in data['exist']:
             data['subreddit'][subreddit]['before_id'] = before_id
             with open(file_path, 'w') as fe:
-                json.dump(data, fe, indent=4)
-                return "Before ID Updated"
+                json.dump(data, fe, indent=3)
+            return "Before ID Updated"
         else:
-            # add new subreddit
-            data['subreddit'][subreddit] = {"before_id": before_id}
+            data['exist'].append(subreddit)
+            data['subreddit'][subreddit] = {'before_id': before_id}
             with open(file_path, 'w') as fw:
-                json.dump(data, fw, indent=4)
-                return "New Subreddit Added"
+                json.dump(data, fw, indent=3)
+            return "New Subreddit Added"
 
 
 def getSubReddit(subreddit, reddit_session_cookie):
@@ -140,11 +141,10 @@ def getSubReddit(subreddit, reddit_session_cookie):
 
 def main():
 
-    #connected, reddit_session_cookie = loginReddit()
-    #print(f"Status: {connected}")
-    #print(f"Cookie: {reddit_session_cookie}")
-    #print("=====================================")
-    reddit_session_cookie = ""
+    connected, reddit_session_cookie = loginReddit()
+    print(f"Status: {connected}")
+    print(f"Cookie: {reddit_session_cookie}")
+    print("=====================================")
     try:
         print("SubredditDB File:")
         createJSONBD(file_path=subredditDB_file)

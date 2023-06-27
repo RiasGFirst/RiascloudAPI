@@ -10,7 +10,7 @@ def createJSONBD(file_path):
         print("File Exist")
     else:
         with open(file_path, 'w') as f:
-            f.write('{"subreddit": {}}')
+            f.write('{"exist": [],"subreddit": {}}')
             f.close()
         print("File created")
 
@@ -18,32 +18,30 @@ def createJSONBD(file_path):
 def whatIsBeforeId(subreddit, file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
-    if not data['subreddit'][subreddit]:
-        return "No Before ID"
-    else:
-        before_id = data['subreddit'][subreddit]['before_id']
-        return before_id
-
+        for sub in data["exist"]:
+            if sub == subreddit:
+                before_id = data['subreddit'][subreddit]['before_id']
+                return before_id
+            else:
+                return None
 
 
 def addBeforeId(subreddit, before_id, file_path):
     with open(file_path, 'r') as f:
         data = json.loads(f.read())
-        # verify if subreddit exist in the file
-        if subreddit in data['subreddit']:
+        if subreddit in data['exist']:
             data['subreddit'][subreddit]['before_id'] = before_id
             with open(file_path, 'w') as fe:
-                json.dump(data, fe, indent=4)
-                return "Before ID Updated"
+                json.dump(data, fe, indent=3)
+            return "Before ID Updated"
         else:
-            # add new subreddit
-            data['subreddit'][subreddit] = {"before_id": before_id}
+            data['exist'].append(subreddit)
+            data['subreddit'][subreddit] = {'before_id': before_id}
             with open(file_path, 'w') as fw:
-                json.dump(data, fw, indent=4)
-                return "New Subreddit Added"
-
+                json.dump(data, fw, indent=3)
+            return "New Subreddit Added"
 
 if __name__ == '__main__':
-    addBeforeId(subreddit='test2', before_id='gfgzf', file_path=file_pathDB)
-    print(whatIsBeforeId(subreddit='test', file_path=file_pathDB))
-    print(whatIsBeforeId(subreddit='test4', file_path=file_pathDB))
+    print(whatIsBeforeId('test', file_pathDB))
+    print(addBeforeId('test', 'ok', file_pathDB))
+    print(whatIsBeforeId('test', file_pathDB))
