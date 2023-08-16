@@ -134,11 +134,10 @@ class Reddit:
 
 def main():
     reddit = Reddit()
-    #connected, reddit_session_cookie = reddit.loginReddit(isHeadless=False)
-    #print(f"Status: {connected}")
-    #print(f"Cookie: {reddit_session_cookie}")
+    connected, reddit_session_cookie = reddit.loginReddit(isHeadless=False)
+    print(f"Status: {connected}")
+    print(f"Cookie: {reddit_session_cookie}")
     print("=====================================")
-    reddit_session_cookie="37565806251051%2C2023-08-15T20%3A02%3A27%2C2b0c2d7c73a1389e5fe177103e8f48571f82fda5"
     reddit.verifySubreddit(subreddit='cosplay')
     reddit.getSubreddit(subreddit='cosplay', user_id='40328594', token_id='04ee8b23-7adb-4db7-ad65-6f0d8efff05e', reddit_session_cookie=reddit_session_cookie, before_id=None)
     print("=====================================")
