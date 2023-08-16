@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from db.testDB import DataBase
+from utils.DbUtils import DataBase
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import requests
@@ -16,19 +16,20 @@ reddit_verify = os.getenv("REDDIT_CONNECTED")
 #div._3dLmvT0hpACHFxhncqzCOr
 
 
-def loginReddit():
+def loginReddit(isHeadless):
     print("Login Reddit")
     with sync_playwright() as p:
 
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=isHeadless)
         page = browser.new_page()
         page.goto('https://www.reddit.com/login')
         page.fill('input#loginUsername', reddit_username)
         page.fill('input#loginPassword', reddit_password)
         page.click('button[type=submit]')
         time.sleep(20)
-        if page.is_visible("div._1m0iFpls1wkPZJVo38-LSh"):
-            page.click('button[aria-label=Close]')
+        if isHeadless is False:
+            if page.is_visible("div._1m0iFpls1wkPZJVo38-LSh"):
+                page.click('button[aria-label=Close]')
         cookies = page.context.cookies()
 
         for cookie in cookies:
@@ -63,7 +64,7 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None):
         "User-Agent": "Mozilla/5.0",
         "Cookie": f"reddit_session={reddit_session_cookie}"
     }
-    params = '&limit=5'
+    params = ''
 
     url = url_template.format(subreddit, params)
     response = requests.get(url=url, headers=headers)
@@ -105,20 +106,22 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None):
 
 
 def main():
-    connected, reddit_session_cookie = loginReddit()
+    DataBase()
+    connected, reddit_session_cookie = loginReddit(isHeadless=False)
     print(f"Status: {connected}")
     print(f"Cookie: {reddit_session_cookie}")
     print("=====================================")
-    #reddit_session_cookie = ""
+    """
     try:
-        print("Creation of the SubReddit DB:")
-        print("=====================================")
         print("cosplay Subreddit:")
-        getSubReddit(subreddit='cosplay', reddit_session_cookie=reddit_session_cookie)
+        before_id = DataBase().getBeforeId(subreddit='cosplay')
+        getSubReddit(subreddit='cosplay', reddit_session_cookie=reddit_session_cookie, before_id=before_id)
         print('hentai Subreddit:')
-        getSubReddit(subreddit='hentai', reddit_session_cookie=reddit_session_cookie)
+        before_id = DataBase().getBeforeId(subreddit='hentai')
+        getSubReddit(subreddit='hentai', reddit_session_cookie=reddit_session_cookie, before_id=before_id)
     except KeyboardInterrupt:
         print('Exiting...')
+    """
 
 
 if __name__ == '__main__':

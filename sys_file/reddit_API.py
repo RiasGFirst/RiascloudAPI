@@ -52,3 +52,7 @@ def loginReddit():
         else:
             connected = "Login Failed No Status Code 200"
             return connected, reddit_session_cookie
+
+
+connected, reddit_session_cookie = loginReddit()
+print(connected)
