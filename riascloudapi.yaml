@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: RiasCloudAPI
+  description: Riascloud API regroup all the API of RiasCloud
+  version: 1.0.0
+servers:
+    - url: http://api.riascloud.fr
+      description: Production server
+paths:
+  /reddit/get/{subreddit}:
+    get:
+      summary: Get a subreddit
+      description: Get posts from a subreddit
+      operationId: getSubRedditPost
+      parameters:
+        - name: subreddit
+          in: path
+          description: The subreddit to get the post from
+          required: true
+          schema:
+            type: string
+      security:
+        - api_key: []
+        - client_id: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    subreddit:
+                        type: object
+                        properties:
+                            name:
+                                type: string
+                            posts:
+                                type: array
+                                items:
+                                    type: object
+                                    properties:
+                                        title:
+                                            type: string
+                                        url:
+                                            type: string
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      in: cookie
+      name: api_key
+    client_id:
+      type: apiKey
+      in: cookie
+      name: client_id
+security:
+  - api_key: [required]
+  - client_id: [required]

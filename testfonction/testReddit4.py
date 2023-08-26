@@ -1,3 +1,5 @@
+import json
+
 from playwright.sync_api import sync_playwright
 from utils.DbUtils import DataBase
 from dotenv import load_dotenv
@@ -48,7 +50,8 @@ class Reddit:
             if response.ok:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 verify_connected = soup.find('p', {'class': '_2nyJGeaFJbXTqTh9OGwxfu _1NdK7EwgYqUxJObBr3ym4o'})
-                if verify_connected is not None and verify_connected.text == reddit_verify:
+                if verify_connected is not None and verify_connected.text == self.reddit_verify:
+                    self.reddit_cookie = reddit_session_cookie
                     connected = "Login Successful"
                     return connected, reddit_session_cookie
                 else:
@@ -87,6 +90,9 @@ class Reddit:
             return "Subreddit Added"
 
     def getSubreddit(self, subreddit, user_id, token_id, reddit_session_cookie, before_id=None):
+
+        jsonPost = []
+        jsonToReturn = {}
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Cookie": f"reddit_session={reddit_session_cookie}"
@@ -107,11 +113,12 @@ class Reddit:
                 before_id = DBSubredditData[3]
             else:
                 DataBase().addUserSubreddit(user_id=user_id, token_id=token_id, subreddit=subreddit, before_id=new_before)
-                print("Subreddit Created")
+                #print("Subreddit Created")
 
-            print(f"New Before ID: {new_before}")
+            #print(f"New Before ID: {new_before}")
             if before_id == new_before:
-                print("No New Posts")
+                # print("No New Posts")
+                return json.dumps({"Subreddit": {"name": subreddit, "posts": "No New Posts"}})
 
             for post in data['children']:
                 pdata = post['data']
@@ -125,9 +132,21 @@ class Reddit:
                     post_title = pdata['title']
                     post_author = pdata['author']
                     post_date = pdata['created_utc']
-                    post_url = pdata.get('url_overridden_by_dest')
-                    print(f"Post ID:{post_id}, Post Title: {post_title}, Post Author: {post_author}, Post Date: {post_date}, Post URL: {post_url}")
-            return print("Subreddit Connection Successful")
+                    post_image_url = pdata.get('url_overridden_by_dest')
+                    post_json = {
+                        "post_id": post_id,
+                        "post_title": post_title,
+                        "post_author": post_author,
+                        "post_date": post_date,
+                        "post_image_url": post_image_url
+                    }
+                    jsonPost.append(post_json)
+                    #print(f"Post ID:{post_id}, Post Title: {post_title}, Post Author: {post_author}, Post Date: {post_date}, Post Image URL: {post_image_url}")
+                    jsonToReturn = {
+                        "name": subreddit,
+                        "posts": jsonPost
+                    }
+            return json.dumps({"Subreddit": jsonToReturn})
         else:
             return print("Subreddit Connection Failed")
 
@@ -137,10 +156,10 @@ def main():
     connected, reddit_session_cookie = reddit.loginReddit(isHeadless=False)
     print(f"Status: {connected}")
     print(f"Cookie: {reddit_session_cookie}")
-    print("=====================================")
-    reddit.verifySubreddit(subreddit='cosplay')
-    reddit.getSubreddit(subreddit='cosplay', user_id='40328594', token_id='04ee8b23-7adb-4db7-ad65-6f0d8efff05e', reddit_session_cookie=reddit_session_cookie, before_id=None)
-    print("=====================================")
+    #print("=====================================")
+    #reddit.verifySubreddit(subreddit='cosplay')
+    #reddit.getSubreddit(subreddit='cosplay', user_id='40328594', token_id='04ee8b23-7adb-4db7-ad65-6f0d8efff05e', reddit_session_cookie=reddit_session_cookie, before_id=None)
+    #print("=====================================")
 
 
 if __name__ == '__main__':

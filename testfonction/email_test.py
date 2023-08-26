@@ -9,7 +9,7 @@ load_dotenv()
 smtp_server = "mail.riascloud.fr"
 port = 465 # For SSL
 sender_email = "no-reply@riascloud.fr"  # Enter your address
-receiver_email = "test.dev@riascloud.fr"  # Enter receiver address
+receiver_email = "testfonction.dev@riascloud.fr"  # Enter receiver address
 test="RAndom"
 #create a email
 message = MIMEMultipart("alternative")

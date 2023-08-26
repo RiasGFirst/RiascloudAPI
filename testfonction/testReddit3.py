@@ -2,6 +2,7 @@ from playwright.sync_api import sync_playwright
 from utils.DbUtils import DataBase
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+from pprint import pprint
 import requests
 import time
 import os
@@ -74,7 +75,7 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None):
         new_before = data['children'][0]['data']['name']
 
         if DataBase().verifySubreddit(subreddit=subreddit):
-            before_id = DataBase().getBeforeId(subreddit=subreddit)
+            #before_id = DataBase().getBeforeId(subreddit=subreddit)
             print(f"Before ID: {before_id}")
         else:
             DataBase().addSubreddit(subreddit=subreddit, before_id=new_before)
@@ -86,10 +87,12 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None):
 
         for post in data['children']:
             pdata = post['data']
+            pprint(pdata)
+            print("=====================================")
             post_name = pdata['name']
 
             if post_name == before_id:
-                DataBase().updateSubreddit(subreddit=subreddit, before_id=new_before)
+                #DataBase().updateSubreddit(subreddit=subreddit, before_id=new_before)
                 break
             else:
                 post_id = pdata['id']
@@ -98,6 +101,7 @@ def getSubReddit(subreddit, reddit_session_cookie, before_id=None):
                 post_date = pdata['created_utc']
                 post_url = pdata.get('url_overridden_by_dest')
                 print(post_id, post_title, post_author, post_date, post_url)
+                print("=====================================")
         return print("Subreddit Connection Successful")
 
     else:
@@ -125,4 +129,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    getSubReddit(subreddit='cosplay', reddit_session_cookie=os.getenv("REDDIT_COOKIES"))

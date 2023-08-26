@@ -1,7 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
-import DbUtils
+import utils.DbUtils as DbUtils
 import smtplib
 import ssl
 import os
@@ -36,7 +36,7 @@ class Mail:
         text = f"""\
         Dear {self.receiver_email},
         
-        We're excited to provide you with access to Service XYZ. Here are the details you'll need to get started:
+        We're excited to provide you with access to Service Reddit API. Here are the details you'll need to get started:
         
         Token_id: {self.token_id}
         user_id: {self.user_id}
@@ -62,12 +62,12 @@ class Mail:
         context = ssl.create_default_context()
 
         server = smtplib.SMTP_SSL(self.smtp_server, self.smtp_port)
-        print("SMTP Server Connected")
+        #print("SMTP Server Connected")
         server.login(self.smtp_email, self.smtp_password)
-        print("Login Successful")
+        #print("Login Successful")
         if isAdded == "User Added":
             server.sendmail(self.smtp_email, self.receiver_email, message.as_string())
-            print("Email sent!")
+            #print("Email sent!")
         server.quit()
 
 
