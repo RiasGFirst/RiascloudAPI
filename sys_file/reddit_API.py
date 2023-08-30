@@ -15,7 +15,6 @@ class Reddit:
         self.reddit_username = os.getenv("REDDIT_USERNAME")
         self.reddit_password = os.getenv("REDDIT_PASSWORD")
         self.reddit_verify = os.getenv("REDDIT_CONNECTED")
-        self.reddit_cookie = None
 
     # Login Modules
     def loginReddit(self, isHeadless):
@@ -82,9 +81,27 @@ class Reddit:
 
     # Subreddit Modules
     # Verify Subreddit in table
-    def verifySubreddit(self, subreddit):
+    def verifySubreddit(self, subreddit, reddit_session_cookie):
         if not DataBase().verifySubreddit(subreddit=subreddit):
-            DataBase().addSubreddit(subreddit=subreddit)
+            jsonToReturn = {}
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "Cookie": f"reddit_session={reddit_session_cookie}"
+            }
+            url_template = "https://www.reddit.com/r/{}/new.json?t=all{}"
+            params = '&limit=5'
+
+            url = url_template.format(subreddit, params)
+            print(url)
+            response = requests.get(url=url, headers=headers)
+
+            if response.ok:
+                DataBase().addSubreddit(subreddit=subreddit)
+                return "Subreddit Added"
+            else:
+                return "Subreddit not Added"
+
+            #DataBase().addSubreddit(subreddit=subreddit)
             return "Subreddit Added"
 
     def getSubreddit(self, subreddit, user_id, token_id, reddit_session_cookie, before_id=None):

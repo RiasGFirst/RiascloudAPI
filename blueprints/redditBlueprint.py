@@ -47,6 +47,9 @@ def getSubreddit(subreddit):
                 return "You don't have any token", 400
             else:
                 reddit = Reddit()
-                reddit.verifySubreddit(subreddit=subreddit)
-                json = reddit.getSubreddit(subreddit=subreddit, user_id=client_id, token_id=api_key, reddit_session_cookie=reddit_cookie)
-                return jsonify(json), 200
+                err = reddit.verifySubreddit(subreddit=subreddit, reddit_session_cookie=reddit_cookie)
+                if err == "Subreddit not Added":
+                    return jsonify({"Subreddit": subreddit, "messsage": "Not Exist or Banned"})
+                else:
+                    json = reddit.getSubreddit(subreddit=subreddit, user_id=client_id, token_id=api_key, reddit_session_cookie=reddit_cookie)
+                    return jsonify(json), 200
