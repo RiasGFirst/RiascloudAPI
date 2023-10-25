@@ -20,6 +20,7 @@ class DataBase:
             password=self.password,
             database=self.database
         )
+        print(self.conn)
         self.cursor = self.conn.cursor()
         self.cursor.execute(f"""CREATE DATABASE IF NOT EXISTS {self.database}""")
         self.cursor.execute(f"""USE {self.database}""")
@@ -104,8 +105,3 @@ class DataBase:
                 return "User Subreddit Not Updated"
         else:
             return error
-
-
-if __name__ == '__main__':
-    DataBase()
-    print(DataBase().addUserSubreddit(user_id='40328594', token_id='04ee8b23-7adb-4db7-ad65-6f0d8efff05e', subreddit='cosplay', before_id=None))
